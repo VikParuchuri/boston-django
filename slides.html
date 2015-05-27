@@ -1,0 +1,309 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>My Awesome Presentation</title>
+    <meta http-equiv="Content-Type" content="text/html; charset=UTF-8"/>
+    <style type="text/css">
+      @import url(http://fonts.googleapis.com/css?family=Yanone+Kaffeesatz);
+      @import url(http://fonts.googleapis.com/css?family=Droid+Serif:400,700,400italic);
+      @import url(http://fonts.googleapis.com/css?family=Ubuntu+Mono:400,700,400italic);
+      body { font-family: 'Droid Serif'; }
+      h1, h2, h3 {
+        font-family: 'Yanone Kaffeesatz';
+        font-weight: normal;
+      }
+
+      .remark-code, .remark-inline-code {
+          font-family: 'Ubuntu Mono';
+          font-size: 30px;
+      }
+
+      .small-code .remark-code, .small-code .remark-inline-code {
+          font-family: 'Ubuntu Mono';
+          font-size: 15px;
+      }
+
+      pre {
+        white-space: pre-wrap;       /* CSS 3 */
+        white-space: -moz-pre-wrap;  /* Mozilla, since 1999 */
+        white-space: -pre-wrap;      /* Opera 4-6 */
+        white-space: -o-pre-wrap;    /* Opera 7 */
+        word-wrap: break-word;       /* Internet Explorer 5.5+ */
+      }
+
+      body {
+        font-family: 'Droid Serif';
+      }
+      h1, h2, h3 {
+        font-family: 'Yanone Kaffeesatz';
+        font-weight: 400;
+        margin-bottom: 0;
+      }
+      .remark-slide-content h1 { font-size: 3em; }
+      .remark-slide-content h2 { font-size: 2em; }
+      .remark-slide-content h3 { font-size: 1.6em; }
+      .footnote {
+        position: absolute;
+        bottom: 3em;
+      }
+      li p { line-height: 1.25em; }
+      .red { color: #fa0000; }
+      .large { font-size: 2em; }
+      a, a > code {
+        color: rgb(249, 38, 114);
+        text-decoration: none;
+      }
+      code {
+        background: #e7e8e2;
+        border-radius: 5px;
+      }
+      .remark-code, .remark-inline-code { font-family: 'Ubuntu Mono'; }
+      .remark-code-line-highlighted     { background-color: #373832; }
+      .pull-left {
+        float: left;
+        width: 47%;
+      }
+      .pull-right {
+        float: right;
+        width: 47%;
+      }
+      .pull-right ~ p {
+        clear: both;
+      }
+      #slideshow .slide .content code {
+        font-size: 0.8em;
+      }
+      #slideshow .slide .content pre code {
+        font-size: 0.9em;
+        padding: 15px;
+      }
+      .inverse {
+        background: #272822;
+        color: #777872;
+        text-shadow: 0 0 20px #333;
+      }
+      .inverse h1, .inverse h2 {
+        color: #f3f3f3;
+        line-height: 0.8em;
+      }
+
+      /* Slide-specific styling */
+      #slide-inverse .footnote {
+        bottom: 12px;
+        left: 20px;
+      }
+      #slide-how .slides {
+        font-size: 0.9em;
+        position: absolute;
+        top:  151px;
+        right: 140px;
+      }
+      #slide-how .slides h3 {
+        margin-top: 0.2em;
+      }
+      #slide-how .slides .first, #slide-how .slides .second {
+        padding: 1px 20px;
+        height: 90px;
+        width: 120px;
+        -moz-box-shadow: 0 0 10px #777;
+        -webkit-box-shadow: 0 0 10px #777;
+        box-shadow: 0 0 10px #777;
+      }
+      #slide-how .slides .first {
+        background: #fff;
+        position: absolute;
+        top: 20%;
+        left: 20%;
+        z-index: 1;
+      }
+      #slide-how .slides .second {
+        position: relative;
+        background: #fff;
+        z-index: 0;
+      }
+
+      /* Two-column layout */
+      .left-column {
+        color: #777;
+        width: 20%;
+        height: 92%;
+        float: left;
+      }
+        .left-column h2:last-of-type, .left-column h3:last-child {
+          color: #000;
+        }
+      .right-column {
+        width: 75%;
+        float: right;
+        padding-top: 1em;
+      }
+    </style>
+  </head>
+  <body>
+    <textarea id="source">
+        name: inverse
+        layout: true
+        class: center, middle, inverse
+
+        ---
+        name: normal
+        layout: false
+
+        ---
+        template: inverse
+
+        # Django as a mobile backend
+        ## Vik Paruchuri
+        ## vik@dataquest.io
+        ---
+        template: normal
+
+        # Mobile apps
+
+        ## Need a high level of UI polish
+        ## Have to be ultra-responsive
+        ## Can't have any bugs
+        ## Need a backend?
+
+        ---
+        template: normal
+
+        # Questions to answer
+
+        ## Which backend do I choose?
+        ## When do I switch backends?
+        ## How do I work with django and rest framework?
+
+        ---
+        template: inverse
+
+        # Let's make a game where you can capture territory by running
+
+        ---
+        template: normal
+
+        # Major features
+
+        ## Get users location as they move around
+        ## Determine which territory they are in, and for how long
+        ## Give them points in the right territory
+        ## Compute the territory leaders and send pushes
+
+        ---
+        template: normal
+
+        # Parse
+
+        ## Javascript/mongo based backend as a service
+        ## Very quick to get started with
+
+        ---
+        template: normal
+
+        # Making and storing an object
+
+        ```objective-c
+        PFObject *language = [PFObject objectWithClassName:@"Language"];
+
+        language[@"name"] = @"python";
+
+        language[@"rating"] = @100;
+
+        [language saveInBackgroundWithBlock:^(BOOL succeeded, NSError *error) {
+        }];
+        ```
+
+        ---
+        template: normal
+
+        # Querying
+
+        ```objective-c
+        PFQuery *query = [PFQuery queryWithClassName:@"Language"];
+
+        [query whereKey:@"name" equalTo:@"python"];
+
+        [query findObjectsInBackgroundWithBlock:^(NSArray *objects, NSError *error) {
+         }];
+        ```
+
+        ---
+        template: normal
+
+        # And there's more!
+
+        ## Location-based querying
+        ## Push notifications
+        ## "Cloud code" that runs on server
+
+
+        ---
+        template: normal
+
+        # For most simple or MVP use cases, Parse is the best option.
+
+        ---
+        template: inverse
+
+        # But there are huge catches as you scale!
+
+        ---
+        template: normal
+        class: small-code
+
+        # Nested callbacks are the worst
+
+        ```javascript
+            var userQuery = new Parse.Query(Parse.User);
+            userQuery.each(function(user){
+                return Leaderboard.createUserScore(user);
+            }).then(function(){
+                var UserTileRecord = Parse.Object.extend("UserTileRecord");
+                var query = new Parse.Query(UserTileRecord);
+                query.include("user.userScore");
+                var userPoints = {};
+                query.each(function(tileRecord) {
+                    promise.resolve();
+                    return promise;
+                }).then(function(){
+                      var keys = Object.keys(userPoints);
+                        var promises = [];
+                        for(var i = 0; i < keys.length; i++){
+                            var key = keys[i];
+                            promises.push(Leaderboard.addPoints(userPoints[key].user, userPoints[key].points, userPoints[key].turfs));
+                        }
+                        return Parse.Promise.when(promises);
+                  },
+                function(error){
+                    var message = "Error creating user score" + error.code + " " + error.message;
+                    console.log(message);
+                    status.error(message);
+                }).then(function(){
+                        status.success();
+                    }, function(error){
+                    });
+            }, function(error){
+            });
+        ```
+
+        ---
+        template: normal
+
+        # The main downsides
+
+        ## Impossible to debug
+        ## Crazy callbacks
+        ## Very limited query system
+        ## Cloud code has strict time limits
+        ## Cloud code executions randomly stop
+
+
+
+    </textarea>
+    <script src="remark.js" type="text/javascript">
+    </script>
+    <script type="text/javascript">
+      var slideshow = remark.create();
+    </script>
+  </body>
+</html>
