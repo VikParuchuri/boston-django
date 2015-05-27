@@ -23,6 +23,11 @@
           font-size: 15px;
       }
 
+      .medium-code .remark-code, .medium-code .remark-inline-code {
+          font-family: 'Ubuntu Mono';
+          font-size: 20px;
+      }
+
       pre {
         white-space: pre-wrap;       /* CSS 3 */
         white-space: -moz-pre-wrap;  /* Mozilla, since 1999 */
@@ -184,10 +189,10 @@
 
         # Major features
 
-        ## Get users location as they move around
-        ## Determine which territory they are in, and for how long
-        ## Give them points in the right territory
-        ## Compute the territory leaders and send pushes
+        ## Get user location as they move
+        ## Determine which territory they're in
+        ## Give them points in the territory
+        ## Compute the territory leader and send pushes
 
         ---
         template: normal
@@ -240,7 +245,7 @@
         ---
         template: normal
 
-        # For most simple or MVP use cases, Parse is the best option.
+        # For most MVP use cases, Parse is the best option.
 
         ---
         template: inverse
@@ -291,11 +296,184 @@
 
         # The main downsides
 
-        ## Impossible to debug
-        ## Crazy callbacks
-        ## Very limited query system
+        ## Impossible to debug or test
+        ## Limited query system
         ## Cloud code has strict time limits
-        ## Cloud code executions randomly stop
+
+        ---
+        template: inverse
+
+        # Finding a new backend
+
+        ---
+        template: normal
+
+        # Main goals
+
+        ## Easy to debug/test
+        ## Quicker to build new features
+        ## Known, mature stack
+        ## Easy to use location features
+
+        ---
+        template: normal
+
+        # Why a framework?
+
+        ## Encourage best practices
+        ## Quicker to develop with
+        ## Easier to test
+
+        ---
+        template: normal
+
+        # Why DRF?
+
+        ## Actively developed
+        ## Good documentation
+        ## Well-structured
+
+        ---
+        template: normal
+
+        # Final stack
+
+        ## Django + geodjango
+        ## Celery
+        ## Django rest framework
+        ## Postgres + postgis
+
+        ---
+        template: normal
+
+        # Authentication
+
+        ## Token auth
+
+        ```python
+        REST_FRAMEWORK = {
+            'DEFAULT_AUTHENTICATION_CLASSES': (
+                'rest_framework.authentication.TokenAuthentication',
+                'rest_framework.authentication.SessionAuthentication'
+            ),
+            ...
+        }
+        ```
+
+        ---
+        template: normal
+        class: medium-code
+
+        # Social auth
+
+        ## Get tokens from device, verify, and store
+
+        ```python
+        def verify_facebook_id(uid, access_token):
+            params = {'fields': 'id', 'access_token': access_token}
+            text = requests.get("https://graph.facebook.com/me", params=params).text
+            return json.loads(text).get("id", None) == uid
+        ```
+
+        ```python
+        def verify_twitter_id(uid, auth_token, auth_token_secret, consumer_key, consumer_secret):
+            twitter = Twython(consumer_key, consumer_secret, auth_token, auth_token_secret)
+            credentials = twitter.verify_credentials()
+            return uid in [credentials["id_str"], credentials["id"]]
+        ```
+
+        ---
+        template: normal
+        class: medium-code
+
+        # Push notifications
+
+        ## Step one, register device
+
+        ```python
+        @shared_task()
+        def create_endpoint(installation_id):
+            install = Installation.objects.get(id=installation_id)
+            sns = boto.connect_sns(settings.AWS_ACCESS_KEY_ID, settings.AWS_SECRET_ACCESS_KEY)
+            endpoint_data = sns.create_platform_endpoint(platform_application_arn=settings.APP_PUSH_ARN, token=install.device_token)
+            endpoint_arn = endpoint_data["CreatePlatformEndpointResponse"]["CreatePlatformEndpointResult"]["EndpointArn"]
+            install.amazon_arn = endpoint_arn
+            install.save()
+        ```
+
+        ---
+        template: normal
+        class: medium-code
+
+        # Push notifications
+
+        ## Step two, send push
+
+        ```python
+        @shared_task()
+        def send_push(user_id, message_text, additional_data=None):
+            user = User.objects.get(id=user_id)
+            sns = boto.connect_sns(settings.AWS_ACCESS_KEY_ID, settings.AWS_SECRET_ACCESS_KEY)
+            apns_string = json.dumps({'aps': {'alert': message_text, 'badge': 1}})
+
+            message = {'default': message_text, settings.APNS_MODE: apns_string}
+            message_json = json.dumps(message, ensure_ascii=False)
+            arn = user.installations[0].amazon_arn
+            sns.publish(
+                message=message_json,
+                target_arn=arn,
+                message_structure='json'
+            )
+        ```
+
+        ---
+        template: normal
+
+        # Permissions
+
+        ## Object level with django guardian
+
+        ```python
+        def assign_installation_perms(sender, instance=None, created=False, **kwargs):
+            if created:
+                user = instance.user
+                if user is None:
+                    return
+
+                assign_perm("view_installation", user, instance)
+                assign_perm("change_installation", user, instance)
+
+        post_save.connect(assign_installation_perms, sender=Installation, dispatch_uid="create-installation-permissions")
+        ```
+
+        ---
+        template: normal
+
+        # Making API URLs
+
+
+        ```python
+        class InstallationViewSet(mixins.CreateModelMixin, mixins.UpdateModelMixin, viewsets.GenericViewSet):
+            permission_classes = (permissions.DjangoObjectPermissions,)
+            queryset = Installation.objects.all()
+            serializer_class = InstallationSerializer
+            paginate_by = 25
+        ```
+
+        ---
+        template: normal
+
+        # Making custom views
+
+        ```python
+        class SetSuggestedFriendsSeen(APIView):
+            def post(self, request, format=None):
+                profile = request.user.profile
+                profile.should_see_suggested = False
+                profile.save()
+                return Response(status=status.HTTP_200_OK)
+        ```
+
 
 
 
