@@ -15,17 +15,12 @@
 
       .remark-code, .remark-inline-code {
           font-family: 'Ubuntu Mono';
-          font-size: 30px;
+          font-size: 24px;
       }
 
       .small-code .remark-code, .small-code .remark-inline-code {
           font-family: 'Ubuntu Mono';
           font-size: 15px;
-      }
-
-      .medium-code .remark-code, .medium-code .remark-inline-code {
-          font-family: 'Ubuntu Mono';
-          font-size: 20px;
       }
 
       pre {
@@ -209,11 +204,8 @@
 
         ```objective-c
         PFObject *language = [PFObject objectWithClassName:@"Language"];
-
         language[@"name"] = @"python";
-
         language[@"rating"] = @100;
-
         [language saveInBackgroundWithBlock:^(BOOL succeeded, NSError *error) {
         }];
         ```
@@ -225,9 +217,7 @@
 
         ```objective-c
         PFQuery *query = [PFQuery queryWithClassName:@"Language"];
-
         [query whereKey:@"name" equalTo:@"python"];
-
         [query findObjectsInBackgroundWithBlock:^(NSArray *objects, NSError *error) {
          }];
         ```
@@ -362,68 +352,126 @@
 
         ---
         template: normal
-        class: medium-code
 
         # Social auth
 
-        ## Get tokens from device, verify, and store
+        ## Get tokens from device and verify + store
 
         ```python
-        def verify_facebook_id(uid, access_token):
-            params = {'fields': 'id', 'access_token': access_token}
-            text = requests.get("https://graph.facebook.com/me", params=params).text
-            return json.loads(text).get("id", None) == uid
+        params = {'fields': 'id', 'access_token': access_token}
+        text = requests.get("https://graph.facebook.com/me", params=params).text
+        tokens_valid = json.loads(text).get("id", None) == uid
         ```
 
         ```python
-        def verify_twitter_id(uid, auth_token, auth_token_secret, consumer_key, consumer_secret):
-            twitter = Twython(consumer_key, consumer_secret, auth_token, auth_token_secret)
-            credentials = twitter.verify_credentials()
-            return uid in [credentials["id_str"], credentials["id"]]
+        twitter = Twython(consumer_key, consumer_secret, auth_token, auth_token_secret)
+        credentials = twitter.verify_credentials()
+        tokens_valid = uid in [credentials["id_str"], credentials["id"]]
         ```
 
         ---
         template: normal
-        class: medium-code
+
+        # Social auth
+
+        ## When user logs in next, match record based on facebook/twitter id
+
+        ```python
+        id_ok = verify_facebook_id(facebook_id, access_token)
+
+        fb_info_exists = FacebookInfo.objects.filter(facebook_id=facebook_id).exists()
+
+        user = FacebookInfo.objects.get(facebook_id=facebook_id).user
+        ```
+
+        ---
+        template: normal
 
         # Push notifications
 
         ## Step one, register device
 
         ```python
-        @shared_task()
-        def create_endpoint(installation_id):
-            install = Installation.objects.get(id=installation_id)
-            sns = boto.connect_sns(settings.AWS_ACCESS_KEY_ID, settings.AWS_SECRET_ACCESS_KEY)
-            endpoint_data = sns.create_platform_endpoint(platform_application_arn=settings.APP_PUSH_ARN, token=install.device_token)
-            endpoint_arn = endpoint_data["CreatePlatformEndpointResponse"]["CreatePlatformEndpointResult"]["EndpointArn"]
-            install.amazon_arn = endpoint_arn
-            install.save()
+        install = Installation.objects.get(id=installation_id)
+        sns = boto.connect_sns(settings.AWS_ACCESS_KEY_ID, settings.AWS_SECRET_ACCESS_KEY)
+        endpoint_data = sns.create_platform_endpoint(...)
+        endpoint_arn = endpoint_data...["EndpointArn"]
+        install.amazon_arn = endpoint_arn
+        install.save()
         ```
 
         ---
         template: normal
-        class: medium-code
 
         # Push notifications
 
         ## Step two, send push
 
         ```python
-        @shared_task()
-        def send_push(user_id, message_text, additional_data=None):
-            user = User.objects.get(id=user_id)
-            sns = boto.connect_sns(settings.AWS_ACCESS_KEY_ID, settings.AWS_SECRET_ACCESS_KEY)
-            apns_string = json.dumps({'aps': {'alert': message_text, 'badge': 1}})
+        user = User.objects.get(id=user_id)
+        arn = user.installations[0].amazon_arn
+        sns = boto.connect_sns(settings.AWS_ACCESS_KEY_ID, settings.AWS_SECRET_ACCESS_KEY)
 
-            message = {'default': message_text, settings.APNS_MODE: apns_string}
-            message_json = json.dumps(message, ensure_ascii=False)
-            arn = user.installations[0].amazon_arn
-            sns.publish(
-                message=message_json,
-                target_arn=arn,
-                message_structure='json'
+        sns.publish(
+            message=message_json,
+            target_arn=arn,
+            message_structure='json'
+        )
+        ```
+
+        ---
+        template: normal
+
+        # Sending email
+
+        ## Use mandrill + python client
+
+        ```python
+            mandrill_client = mandrill.Mandrill(settings.MANDRILL_API_KEY)
+
+            mandrill_client.messages.send_template(
+                template_name='welcome-email-template',
+                message={
+                            "subject": "Welcome!",
+                            "from_email": from_address,
+                            ...
+                        }
             )
+        ```
+
+        ---
+        template: normal
+
+        # Delayed tasks
+
+        ## Use celery and the shared_task decorator
+
+        ```python
+        @shared_task
+        def handle_all_tracks():
+            tracks = Track.objects.all()
+            for t in tracks:
+                handle_track(t, should_send_push=False)
+        ```
+
+        ---
+        template: normal
+
+        # Geographic queries
+
+        ## Geodjango + PostGIS
+
+        ```python
+        class TerritoryRecord(models.Model):
+            point = PointField(blank=True, null=True)
+            objects = GeoManager()
+        ```
+
+        ```python
+        bbox = (lon_min, lat_min, lon_max, lat_max)
+        geom = Polygon.from_bbox(bbox)
+
+        query = TerritoryRecord.objects.filter(point__contained=geom)....
         ```
 
         ---
@@ -443,7 +491,7 @@
                 assign_perm("view_installation", user, instance)
                 assign_perm("change_installation", user, instance)
 
-        post_save.connect(assign_installation_perms, sender=Installation, dispatch_uid="create-installation-permissions")
+        post_save.connect(assign_installation_perms, sender=Installation)
         ```
 
         ---
@@ -469,13 +517,50 @@
         class SetSuggestedFriendsSeen(APIView):
             def post(self, request, format=None):
                 profile = request.user.profile
-                profile.should_see_suggested = False
-                profile.save()
-                return Response(status=status.HTTP_200_OK)
+                ...
         ```
 
+        ---
+        template: inverse
 
+        # Let's take a quick look at the device side
 
+        ---
+        template: normal
+
+        # Use AFNetworking -- it's the best
+
+        ```objective-c
+        AGHTTPSessionManager *manager = [AGUtil getUnauthenticatedManager];
+        NSDictionary *parameters = @{@"email": email, @"password": password};
+        NSString* url = [NSString stringWithFormat:@"%@/accounts/get_auth_token/", HTTP_BASE];
+        [manager POST:url parameters:parameters success:successBlock failure:failureBlock];
+        ```
+
+        ---
+        template: normal
+
+        # General tips
+
+        ## Singleton user class with useful data
+        ## One API "wrapper" file per django app
+        ## Make a custom table view that can handle pagination
+        ## Grab social auth tokens on the device
+
+        ---
+        template: normal
+
+        # User experience tips
+
+        ## Cache results from the server (especially views)
+        ## Profile server requests and speed them up
+        ## Have unobtrusive loading indicators
+
+        ---
+        template: inverse
+
+        # Questions?
+        
 
     </textarea>
     <script src="remark.js" type="text/javascript">
